@@ -178,10 +178,10 @@ async def security_headers(request: Request, call_next):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cache-Control"] = "no-store"
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
-        "form-action 'self'; img-src 'self' data:; media-src 'self' blob:; "
-        "script-src 'self'; style-src 'self'; connect-src 'self' ws: wss:"
-    )
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
+    "form-action 'self'; img-src 'self' data: blob:; media-src 'self' blob:; "
+    "script-src 'self'; style-src 'self'; connect-src 'self' ws: wss:"
+)
     if os.getenv("APP_ENV") == "production":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
