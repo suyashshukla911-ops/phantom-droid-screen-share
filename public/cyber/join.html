@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join — Screen Share</title>
+  <link rel="stylesheet" href="/cyber/style.css">
+</head>
+<body>
+  <main class="shell center-screen">
+    <section class="panel card join-card">
+      <p class="eyebrow">PHANTOM-DROID / DEVICE</p>
+      <h1 style="font-size:clamp(34px,7vw,58px);">Secure Screen Share</h1>
+      <p class="lead">You are joining a temporary screen-sharing session. Nothing can access your screen until you explicitly approve the operating-system prompt.</p>
+
+      <div class="permission-box">
+        <strong>Before you continue</strong>
+        <ul>
+          <li>Only share with someone you trust.</li>
+          <li>Choose exactly what you want the browser/app to share.</li>
+          <li>Do not expose passwords, OTPs, banking screens, private chats, or sensitive documents.</li>
+          <li>Refreshing or leaving this page ends the web session.</li>
+        </ul>
+      </div>
+
+      <div class="field">
+        <label for="roomInput">Session code</label>
+        <input id="roomInput" class="input" autocomplete="off" spellcheck="false" placeholder="Paste the 24-character session code if QR did not populate it">
+      </div>
+
+      <div class="toolbar">
+        <button id="joinButton" class="button secondary" type="button">Join session</button>
+        <button id="shareButton" class="button primary" type="button" disabled>Start sharing my screen</button>
+        <button id="stopButton" class="button danger" type="button" disabled>Stop sharing</button>
+      </div>
+
+      <video id="preview" class="mini-video" autoplay muted playsinline></video>
+      <div id="status" class="notice">Waiting to join a session.</div>
+      <p class="footer-note">Important: this website is a receive-only demo. It does not provide mouse control, keyboard control, shell access, file transfer, persistence, or hidden access.</p>
+    </section>
+  </main>
+  <script type="module" src="/cyber/join.js"></script>
+</body>
+</html>
