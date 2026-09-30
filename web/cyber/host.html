@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Phantom-Droid — Viewer Console</title>
+  <link rel="stylesheet" href="/cyber/style.css">
+</head>
+<body>
+<main class="shell">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">PHANTOM-DROID / VIEWER</p>
+      <h1 class="page-title">Remote Screen Console</h1>
+    </div>
+    <div id="status" class="status"><span class="dot"></span><span>Creating secure session…</span></div>
+  </header>
+
+  <section class="grid">
+    <section class="card panel">
+      <div class="section-number">01</div>
+      <h2>Pair the device</h2>
+      <p class="muted">The QR contains only an opaque, short-lived session credential. It does not contain personal data.</p>
+
+      <div class="qr-wrap"><img id="qrImage" alt="Temporary screen-sharing pairing QR code"></div>
+
+      <div class="session-box">
+        <span>SESSION</span>
+        <code id="sessionCode">—</code>
+      </div>
+
+      <div class="expiry">
+        <span>Maximum session lifetime</span>
+        <strong id="expiryText">15:00</strong>
+      </div>
+
+      <div class="toolbar">
+        <button id="copyButton" class="button secondary" type="button">Copy join link</button>
+        <button id="endButton" class="button danger" type="button">End session</button>
+      </div>
+
+      <div class="notice">
+        <strong>Consent status</strong>
+        <div id="consentStatus" class="status-line">Waiting for the device owner.</div>
+      </div>
+
+      <div class="audit">
+        <div class="audit-head">
+          <h3>Security event trail</h3>
+          <span>in-memory / session only</span>
+        </div>
+        <div id="auditTrail" class="audit-list" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="card panel viewer-panel">
+      <div class="viewer-head">
+        <div>
+          <div class="section-number">02</div>
+          <h2>Remote Android Screen</h2>
+          <p id="viewerHint" class="muted">Waiting for the paired device.</p>
+        </div>
+        <div id="peerBadge" class="status"><span class="dot"></span><span>NO DEVICE</span></div>
+      </div>
+
+      <div class="video-frame">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div id="emptyState" class="empty-state">
+          <strong>Remote view is offline</strong>
+          <span>Pairing alone does not grant screen access. The device owner must complete the separate consent and OS authorization steps.</span>
+        </div>
+      </div>
+
+      <div class="viewer-security">
+        <div><strong>Receive-only viewer</strong><span>No mouse, keyboard, touch, shell, file transfer, camera or microphone control.</span></div>
+        <div><strong>No application recording</strong><span>Screen frames are not written to the signaling server by this project.</span></div>
+        <div><strong>Ephemeral session</strong><span>Refresh, leave, stop-sharing or expiry tears down the session.</span></div>
+      </div>
+    </section>
+  </section>
+</main>
+<script type="module" src="/cyber/host.js"></script>
+</body>
+</html>

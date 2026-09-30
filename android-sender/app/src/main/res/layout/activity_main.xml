@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#061015">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PHANTOM-DROID / DEVICE OWNER"
+            android:textColor="#34E7D0"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Authorize secure screen sharing"
+            android:textColor="#EAF5F5"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sessionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="No session loaded"
+            android:textColor="#9AB4BD"
+            android:textSize="14sp" />
+
+        <CheckBox
+            android:id="@+id/purpose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:text="I consent to share my live screen with the viewer for this session."
+            android:textColor="#C9DCDF" />
+
+        <CheckBox
+            android:id="@+id/scope"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I understand the entire visible display may be shared, including notifications and private information I leave visible."
+            android:textColor="#C9DCDF" />
+
+        <CheckBox
+            android:id="@+id/withdraw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I understand that I can stop sharing at any time."
+            android:textColor="#C9DCDF" />
+
+        <CheckBox
+            android:id="@+id/twoDevices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="I have a separate viewer device that will display my screen."
+            android:textColor="#C9DCDF" />
+
+        <TextView
+            android:id="@+id/warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:padding="14dp"
+            android:background="#17190E"
+            android:text="The operating system will display a separate screen-capture permission prompt. This application does not bypass or hide that prompt."
+            android:textColor="#E8EDF0"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/authorizeButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Continue to OS permission"
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/stopButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Stop sharing"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Waiting for consent."
+            android:textColor="#9AB4BD"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+</ScrollView>

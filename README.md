@@ -1,79 +1,124 @@
-# Phantom-Droid Screen Share Demo
+# Phantom-Droid — Consent-First Remote Android Screen Share
 
-A portfolio-safe, consent-based remote screen-sharing prototype inspired by the QR pairing flow shown in the reference video.
+A standalone cybersecurity portfolio project demonstrating **authorized, one-way remote Android screen sharing**.
 
-## What this prototype does
+## Architecture
 
-- Host opens `host.html` and receives a temporary QR code.
-- A participant scans the QR code and joins a single ephemeral room.
-- The participant explicitly taps **Start sharing my screen**.
-- WebRTC transports the selected screen to the host browser.
-- Reloading/leaving ends the session.
-- The server stores only transient signaling state in memory; it does not record screen frames.
-- The host is receive-only: there is no mouse control, keyboard control, shell access, file transfer, persistence, or hidden access.
+- **Python + FastAPI** — session management, authentication, authorization, QR generation and WebSocket signaling.
+- **HTML/CSS + minimal JavaScript** — viewer/device UX and browser WebRTC integration. Browser code is unavoidable for a web client.
+- **Java Android sender** — Android MediaProjection + WebRTC video capture.
+- **WebRTC** — media path between the sender and receive-only viewer.
+- **Render Web Service** — hosts the Python application and WebSocket signaling endpoint.
 
-## Important browser/platform limitation
+## Core workflow
 
-The web Screen Capture API requires a secure context and a user gesture. Current browser-compatibility data lists `getDisplayMedia()` as unsupported on Chrome for Android, so this web-only sender cannot capture an Android phone's whole screen.
+`Viewer creates session -> short-lived QR -> phone opens join page -> explicit consent checklist -> phone pairs -> native sender -> Android OS MediaProjection prompt -> user approves -> live screen appears in viewer`
 
-For a real-phone demonstration, keep this web host/signaling layer and add a native Android sender using Android `MediaProjection`. Android requires the user to approve each capture session. The QR can be used as a deep link into the app, but the app must still present a clear consent step.
+Pairing is deliberately **not** authorization.
 
-## Requirements
+## Consent model
 
-- Node.js 20+
-- A modern browser for the host
-- HTTPS when using screen capture outside localhost
-- WebRTC-compatible network path; a TURN server is recommended for production reliability
+There are separate stages:
 
-## Run in VS Code
+1. **Specific purpose consent** — share the live device screen for this session.
+2. **Scope acknowledgement** — the whole visible display can be shared, including visible notifications/private content.
+3. **Withdrawal acknowledgement** — the owner can stop at any time; leaving/refreshing ends the web session.
+4. **Second-device acknowledgement** — the phone is the sender and a separate device is the viewer.
+5. **Operating-system authorization** — Android's MediaProjection dialog is a separate technical permission step.
+6. **Visible ongoing status** — the Android sender uses a foreground-service notification with a stop action.
 
-Open a terminal in this project folder:
+No screen is captured until the owner completes the consent flow and approves the Android OS prompt.
+
+## Security controls implemented
+
+- high-entropy host and guest credentials
+- credential hashes held in memory
+- credential in QR URL fragment rather than ordinary query logs
+- 15-minute session TTL by default
+- one host/one guest
+- credential-aware reconnect for stale socket replacement
+- role-enforced signaling direction
+- WebSocket origin validation
+- message size/rate limits
+- no server-side media recording
+- no camera/microphone
+- no mouse/keyboard/touch control plane
+- no shell/file transfer/persistence
+- CSP, HSTS in production, X-Frame-Options, Referrer-Policy, Permissions-Policy, CORP and COOP
+- in-memory, bounded security event trail
+- explicit session end/expiry/leave behavior
+- Android foreground-service screen-share indicator
+
+## Run locally
+
+Python 3.11+:
+
+For development/test dependencies:
+`pip install -r requirements-dev.txt`
+
 
 ```powershell
-npm install
-npm start
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:APP_ENV="development"
+uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Open:
 
+`http://localhost:8000/cyber/host.html`
+
+## Render
+
+Use a Render **Web Service**:
+
 ```text
-http://localhost:3000/
+Build command: pip install -r requirements.txt
+Start command: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
+Runtime: Python
 ```
 
-## Test the WebRTC flow before Android integration
+Set:
 
-Open the host page in one desktop browser window:
+```text
+APP_ENV=production
+PUBLIC_ORIGIN=https://YOUR-SERVICE.onrender.com
+ALLOWED_ORIGINS=https://YOUR-SERVICE.onrender.com
+SESSION_TTL_SECONDS=900
+```
 
-`http://localhost:3000/cyber/host.html`
+Do not commit secrets.
 
-Open the generated join link in a second desktop browser window/profile. Because localhost is secure for the local machine, the second desktop browser can request screen capture. This gives you a working end-to-end proof of the signaling and WebRTC flow.
+## Android test
 
-## Testing on a real phone
+Two devices are required:
 
-A phone cannot use `localhost` to reach the desktop server, and screen capture also requires a secure context. Use a deployed HTTPS URL or a secure development tunnel such as Cloudflare Tunnel/ngrok for the web prototype. For Android whole-screen capture, use the native sender app described above.
+- Device A: viewer console.
+- Device B: Android sender.
 
-## Integrating into an existing portfolio
+Scan the QR on Device B, complete the specific consent checklist, open the native sender, and approve Android's MediaProjection prompt.
 
-Move `/public/cyber/*` into your site or route the cybersecurity section to `/cyber/host.html`.
+## Important compliance boundary
 
-The host can also be rendered as a modal or embedded panel. The QR should always point to the public HTTPS origin of the same deployment, e.g.
+This is a portfolio/security engineering demonstration. It is **not** a FedRAMP authorization, FISMA authorization, NASA/ISRO certification, or independent security assessment.
 
-`https://your-domain.example/cyber/join.html?room=<temporary-room-id>`
+The repository contains a threat model, control matrix, security test plan, runbook, risk register, privacy notice, legal/framework notes and demo script so the implementation can be discussed with a CISO in terms of evidence, residual risk and future controls.
 
-Keep the signaling service and the portfolio web app on the same HTTPS origin or configure the appropriate CORS / proxy rules.
+## Residual production work
 
-## Production hardening
+Before calling the service production-grade for unrestricted internet use, add:
 
-1. Use HTTPS + WSS.
-2. Put signaling behind a reverse proxy such as Nginx or a platform proxy.
-3. Add rate limiting on WebSocket connections and QR creation.
-4. Keep room IDs high entropy and ephemeral.
-5. Add a short-lived session expiry and an explicit **End session** button.
-6. Add a TURN server for peers that cannot establish a direct path.
-7. Do not persist SDP, ICE candidates, screen frames, or user identifiers unless there is a clearly documented product requirement.
-8. Add a visible consent screen and never attempt to bypass OS/browser permission prompts.
+- TURN with short-lived credentials
+- centralized monitoring/alerting
+- SBOM/SCA and dependency provenance
+- external secret management
+- scalable shared session state
+- release-signing and Android App Links
+- penetration testing and independent assessment
+- documented incident response and retention policy
+- formal legal review for the exact deployment and user population
 
+## Verification
 
-## Render deployment
-
-This project is designed as a **Render Web Service**, not a static site. It serves the UI and QR endpoint and also terminates the WebSocket signaling endpoint at `/signal`. The server binds to `0.0.0.0` and the `PORT` environment variable.
+Run `pytest -q` after installing the development dependencies. The suite covers session creation, credential-authenticated WebSocket pairing, consent event forwarding and enforcement of guest/host signaling direction.

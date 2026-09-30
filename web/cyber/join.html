@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Phantom-Droid — Device Authorization</title>
+  <link rel="stylesheet" href="/cyber/style.css">
+</head>
+<body>
+<main class="shell center-screen">
+  <section class="card panel consent-card">
+    <p class="eyebrow">PHANTOM-DROID / DEVICE OWNER</p>
+    <h1 class="page-title">Authorize secure screen sharing</h1>
+    <p class="lead">
+      Pairing and screen sharing are separate actions. This page does not capture anything
+      until you complete the consent step and explicitly start screen sharing.
+    </p>
+
+    <div id="stepConsent">
+      <div class="step-title"><span>01</span><strong>Specific consent</strong></div>
+      <div class="check-list">
+        <label><input id="purposeCheck" type="checkbox"> <span>I consent to share my live device screen with the viewer for this session.</span></label>
+        <label><input id="scopeCheck" type="checkbox"> <span>I understand that the entire visible display may be shared, including notifications or private content that I leave visible.</span></label>
+        <label><input id="withdrawCheck" type="checkbox"> <span>I understand that I can stop sharing at any time and that leaving or refreshing this page ends the web session.</span></label>
+      </div>
+
+      <div class="warning-box">
+        <strong>Two devices are required.</strong>
+        <span>The phone is the sender. A separate computer/tablet must run the viewer console. A screenshot of this QR can be used on another device, but the same phone cannot be both viewer and sender.</span>
+      </div>
+
+      <label class="check-single"><input id="twoDeviceCheck" type="checkbox"> <span>I have access to a second device that will display my screen.</span></label>
+
+      <div class="field">
+        <label for="joinLinkInput">Secure join link (optional fallback)</label>
+        <input id="joinLinkInput" class="input" autocomplete="off" spellcheck="false" placeholder="Paste the full QR link if scanning did not open it">
+      </div>
+
+      <div class="toolbar">
+        <button id="continueButton" class="button primary" type="button" disabled>Continue to pairing</button>
+      </div>
+
+      <div id="preStatus" class="notice">Waiting for the consent choices above.</div>
+    </div>
+
+    <div id="stepShare" hidden>
+      <div class="step-title"><span>02</span><strong>Pairing complete</strong></div>
+      <div class="paired-banner">
+        <span class="dot live"></span>
+        <strong id="pairText">Viewer connected. Screen sharing is still off.</strong>
+      </div>
+
+      <div class="warning-box">
+        <strong>Separate screen-share authorization</strong>
+        <span>Your operating system will now ask for permission. The application cannot bypass that prompt. Only after you approve it is a video track created.</span>
+      </div>
+
+      <div id="androidActions" class="action-block" hidden>
+        <button id="openAppButton" class="button primary" type="button">Open Phantom-Droid Sender</button>
+        <p class="footer-note">On Android, whole-device capture is provided by the native sender app because mobile browsers do not expose whole-device capture to this webpage.</p>
+      </div>
+
+      <div id="webActions" class="action-block" hidden>
+        <button id="shareButton" class="button primary" type="button">Start browser screen share</button>
+        <button id="stopButton" class="button danger" type="button" disabled>Stop sharing</button>
+        <video id="preview" class="mini-video" autoplay muted playsinline></video>
+      </div>
+
+      <div id="shareStatus" class="notice">No screen is being shared.</div>
+      <button id="leaveButton" class="button secondary" type="button">Leave session</button>
+    </div>
+  </section>
+</main>
+<script type="module" src="/cyber/join.js"></script>
+</body>
+</html>
