@@ -1,9 +1,0 @@
-<resources>
-    <style name="Theme.PhantomDroid" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#34E7D0</item>
-        <item name="android:navigationBarColor">#061015</item>
-        <item name="android:statusBarColor">#061015</item>
-        <item name="android:windowLightStatusBar">false</item>
-    </style>
-</resources>

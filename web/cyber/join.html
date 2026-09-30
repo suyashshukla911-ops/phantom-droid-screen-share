@@ -4,72 +4,71 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>Phantom-Droid — Device Authorization</title>
+  <title>Phantom-Droid — Sender Consent</title>
   <link rel="stylesheet" href="/cyber/style.css">
 </head>
 <body>
 <main class="shell center-screen">
   <section class="card panel consent-card">
-    <p class="eyebrow">PHANTOM-DROID / DEVICE OWNER</p>
-    <h1 class="page-title">Authorize secure screen sharing</h1>
-    <p class="lead">
-      Pairing and screen sharing are separate actions. This page does not capture anything
-      until you complete the consent step and explicitly start screen sharing.
-    </p>
+    <p class="eyebrow">PHANTOM-DROID / SENDER</p>
+    <h1 class="page-title">Authorize screen sharing</h1>
+    <p class="lead">Pairing only establishes a temporary connection. Nothing is captured until you finish the consent flow and explicitly start browser screen sharing.</p>
 
-    <div id="stepConsent">
-      <div class="step-title"><span>01</span><strong>Specific consent</strong></div>
-      <div class="check-list">
-        <label><input id="purposeCheck" type="checkbox"> <span>I consent to share my live device screen with the viewer for this session.</span></label>
-        <label><input id="scopeCheck" type="checkbox"> <span>I understand that the entire visible display may be shared, including notifications or private content that I leave visible.</span></label>
-        <label><input id="withdrawCheck" type="checkbox"> <span>I understand that I can stop sharing at any time and that leaving or refreshing this page ends the web session.</span></label>
-      </div>
-
-      <div class="warning-box">
-        <strong>Two devices are required.</strong>
-        <span>The phone is the sender. A separate computer/tablet must run the viewer console. A screenshot of this QR can be used on another device, but the same phone cannot be both viewer and sender.</span>
-      </div>
-
-      <label class="check-single"><input id="twoDeviceCheck" type="checkbox"> <span>I have access to a second device that will display my screen.</span></label>
-
-      <div class="field">
-        <label for="joinLinkInput">Secure join link (optional fallback)</label>
-        <input id="joinLinkInput" class="input" autocomplete="off" spellcheck="false" placeholder="Paste the full QR link if scanning did not open it">
-      </div>
-
-      <div class="toolbar">
-        <button id="continueButton" class="button primary" type="button" disabled>Continue to pairing</button>
-      </div>
-
-      <div id="preStatus" class="notice">Waiting for the consent choices above.</div>
+    <div class="security-ribbon">
+      <span class="ribbon-item"><i class="dot live"></i> consent-gated</span>
+      <span class="ribbon-item"><i class="dot live"></i> receive-only viewer</span>
+      <span class="ribbon-item"><i class="dot live"></i> no server recording</span>
     </div>
 
-    <div id="stepShare" hidden>
-      <div class="step-title"><span>02</span><strong>Pairing complete</strong></div>
-      <div class="paired-banner">
-        <span class="dot live"></span>
-        <strong id="pairText">Viewer connected. Screen sharing is still off.</strong>
+    <div id="consentFlow">
+      <div id="consentStep" class="consent-step">
+        <div class="step-title"><span id="stepNumber">01</span><strong id="stepTitle">Purpose</strong></div>
+        <p id="stepBody" class="muted">This session is intended only to demonstrate consent-controlled remote screen viewing. It ends automatically after the short session lifetime or when you leave.</p>
+        <div class="notice"><strong id="stepCalloutTitle">Specific purpose</strong><div id="stepCalloutText" class="status-line">The live screen is shared only so the paired viewer can see it during this session.</div></div>
+        <div class="toolbar"><button id="stepContinue" class="button primary" type="button">I understand — continue</button></div>
       </div>
 
-      <div class="warning-box">
-        <strong>Separate screen-share authorization</strong>
-        <span>Your operating system will now ask for permission. The application cannot bypass that prompt. Only after you approve it is a video track created.</span>
+      <div class="progress" aria-label="Consent progress">
+        <span id="p1" class="progress-dot active"></span>
+        <span id="p2" class="progress-dot"></span>
+        <span id="p3" class="progress-dot"></span>
+        <span id="p4" class="progress-dot"></span>
+      </div>
+    </div>
+
+    <div id="pairingArea" hidden>
+      <div class="step-title"><span>05</span><strong>Pairing and capture</strong></div>
+      <div id="pairStatus" class="paired-banner">
+        <span class="dot warn"></span>
+        <strong>Connecting to the temporary viewer…</strong>
       </div>
 
-      <div id="androidActions" class="action-block" hidden>
-        <button id="openAppButton" class="button primary" type="button">Open Phantom-Droid Sender</button>
-        <p class="footer-note">On Android, whole-device capture is provided by the native sender app because mobile browsers do not expose whole-device capture to this webpage.</p>
+      <div class="environment-box">
+        <strong>Two browser sessions, no app</strong>
+        <span>This demo needs a sender browser and a viewer browser. They can be on separate devices, or on one computer using separate windows/tabs.</span>
       </div>
 
-      <div id="webActions" class="action-block" hidden>
-        <button id="shareButton" class="button primary" type="button">Start browser screen share</button>
-        <button id="stopButton" class="button danger" type="button" disabled>Stop sharing</button>
+      <div id="unsupportedBox" class="warning-box" hidden>
+        <strong>Screen sharing is unavailable in this browser</strong>
+        <span>This browser does not expose the Screen Capture API needed by the website. No application download is requested. Open the same secure join link in a supported desktop browser to run the live mirror.</span>
+      </div>
+
+      <div id="supportedActions" class="action-block" hidden>
+        <div class="prompt-box">
+          <div class="prompt-badge">NEXT SECURITY GATE</div>
+          <strong>Browser screen-share permission</strong>
+          <span>Press the button below. Your browser will open its own screen-sharing chooser. Select the tab/window/screen you want to demonstrate and approve it.</span>
+        </div>
+        <button id="shareButton" class="button primary wide" type="button">Start browser screen sharing</button>
+        <button id="stopButton" class="button danger wide" type="button" disabled>Stop sharing</button>
         <video id="preview" class="mini-video" autoplay muted playsinline></video>
       </div>
 
       <div id="shareStatus" class="notice">No screen is being shared.</div>
       <button id="leaveButton" class="button secondary" type="button">Leave session</button>
     </div>
+
+    <div id="preStatus" class="footer-note" aria-live="polite">Follow each consent stage. No screen capture has started.</div>
   </section>
 </main>
 <script type="module" src="/cyber/join.js"></script>

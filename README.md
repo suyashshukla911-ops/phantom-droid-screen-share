@@ -1,66 +1,58 @@
-# Phantom-Droid — Consent-First Remote Android Screen Share
+# Phantom-Droid — Consent-First Browser Screen Mirror
 
-A standalone cybersecurity portfolio project demonstrating **authorized, one-way remote Android screen sharing**.
+A standalone cybersecurity portfolio project demonstrating **authorized, one-way remote browser screen mirroring** without requiring a native Android application.
 
-## Architecture
+## What the demo does
 
-- **Python + FastAPI** — session management, authentication, authorization, QR generation and WebSocket signaling.
-- **HTML/CSS + minimal JavaScript** — viewer/device UX and browser WebRTC integration. Browser code is unavoidable for a web client.
-- **Java Android sender** — Android MediaProjection + WebRTC video capture.
-- **WebRTC** — media path between the sender and receive-only viewer.
-- **Render Web Service** — hosts the Python application and WebSocket signaling endpoint.
+`Viewer creates session -> short-lived QR -> sender browser opens secure link -> staged consent -> browser-native screen-share prompt -> WebRTC -> receive-only viewer`
 
-## Core workflow
+The live media path is browser-to-browser using WebRTC. The Python service handles temporary sessions, authentication, QR generation and signaling; it does not record the screen stream.
 
-`Viewer creates session -> short-lived QR -> phone opens join page -> explicit consent checklist -> phone pairs -> native sender -> Android OS MediaProjection prompt -> user approves -> live screen appears in viewer`
+## No-download design
 
-Pairing is deliberately **not** authorization.
+This version intentionally removes the Android APK/Android Studio requirement from the portfolio demo.
 
-## Consent model
+- The sender is a normal browser page.
+- A supported desktop browser can call the Web Screen Capture API and show the browser's own permission chooser.
+- The viewer is receive-only.
+- Two browser sessions are required; for a self-demo, they can run on one computer in separate windows/tabs.
+- Android/mobile browsers may open and participate in the consent/pairing flow, but a web page cannot be assumed to have whole-device capture capability there. The UI states the capability boundary instead of attempting to bypass the platform.
 
-There are separate stages:
+## Security model
 
-1. **Specific purpose consent** — share the live device screen for this session.
-2. **Scope acknowledgement** — the whole visible display can be shared, including visible notifications/private content.
-3. **Withdrawal acknowledgement** — the owner can stop at any time; leaving/refreshing ends the web session.
-4. **Second-device acknowledgement** — the phone is the sender and a separate device is the viewer.
-5. **Operating-system authorization** — Android's MediaProjection dialog is a separate technical permission step.
-6. **Visible ongoing status** — the Android sender uses a foreground-service notification with a stop action.
+1. **Purpose** — why the screen is being shared.
+2. **Scope** — what the selected tab/window/display may expose.
+3. **Data handling** — what is transmitted and what is not stored by the application.
+4. **Withdrawal** — how the user stops/ends sharing.
+5. **Browser authorization** — the browser's own screen-share chooser is the final technical permission gate.
+6. **Protocol authorization** — the backend rejects WebRTC offers unless consent is complete and the sender has activated sharing.
 
-No screen is captured until the owner completes the consent flow and approves the Android OS prompt.
-
-## Security controls implemented
+### Controls
 
 - high-entropy host and guest credentials
-- credential hashes held in memory
-- credential in QR URL fragment rather than ordinary query logs
+- guest credential in a URL fragment
 - 15-minute session TTL by default
-- one host/one guest
-- credential-aware reconnect for stale socket replacement
-- role-enforced signaling direction
-- WebSocket origin validation
-- message size/rate limits
-- no server-side media recording
+- one host / one sender per session
+- reconnect generation checks
+- staged consent state machine
+- offer gating until share is active
+- strict WebSocket message allow-list and size/rate limits
 - no camera/microphone
-- no mouse/keyboard/touch control plane
-- no shell/file transfer/persistence
+- no mouse/keyboard/touch/shell/file-transfer channel
+- no server-side screen-frame persistence
 - CSP, HSTS in production, X-Frame-Options, Referrer-Policy, Permissions-Policy, CORP and COOP
-- in-memory, bounded security event trail
-- explicit session end/expiry/leave behavior
-- Android foreground-service screen-share indicator
+- bounded in-memory audit trail
+- explicit end/leave/expiry semantics
 
 ## Run locally
 
-Python 3.11+:
-
-For development/test dependencies:
-`pip install -r requirements-dev.txt`
-
+Python 3.11+ is recommended for the deployment target.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 $env:APP_ENV="development"
 uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -69,56 +61,39 @@ Open:
 
 `http://localhost:8000/cyber/host.html`
 
+## Simple desktop demo
+
+1. Open the viewer page.
+2. Click **Open sender here**.
+3. In the new tab, complete all four consent stages.
+4. Wait for **Viewer connected**.
+5. Click **Start browser screen sharing**.
+6. In the browser's native chooser, select a demo tab/window/screen and approve it.
+7. The viewer receives the live surface.
+8. Click **Stop sharing** to revoke the stream.
+
+For the cleanest presentation, click **Open demo surface** on the viewer and share that tab. Its clock/counter/security state visibly changes, making the mirror easy to verify.
+
 ## Render
 
-Use a Render **Web Service**:
+Use a Render **Web Service** with:
 
 ```text
-Build command: pip install -r requirements.txt
-Start command: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
 Runtime: Python
+Build: pip install -r requirements.txt
+Start: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
 ```
 
-Set:
+The included `render.yaml` keeps the existing public service URL configuration and is suitable for the current Render deployment.
 
-```text
-APP_ENV=production
-PUBLIC_ORIGIN=https://YOUR-SERVICE.onrender.com
-ALLOWED_ORIGINS=https://YOUR-SERVICE.onrender.com
-SESSION_TTL_SECONDS=900
-```
+Expected production URLs:
 
-Do not commit secrets.
+`https://phantom-droid-screen-share.onrender.com/health`
 
-## Android test
+`https://phantom-droid-screen-share.onrender.com/cyber/host.html`
 
-Two devices are required:
+## Limitations and residual work
 
-- Device A: viewer console.
-- Device B: Android sender.
+The current WebRTC configuration uses public STUN only. Some restrictive networks will require TURN for reliable media connectivity. For production-scale use, add short-lived TURN credentials, centralized monitoring, external secrets, SBOM/SCA, stronger edge rate limiting, scalable session state and independent security testing.
 
-Scan the QR on Device B, complete the specific consent checklist, open the native sender, and approve Android's MediaProjection prompt.
-
-## Important compliance boundary
-
-This is a portfolio/security engineering demonstration. It is **not** a FedRAMP authorization, FISMA authorization, NASA/ISRO certification, or independent security assessment.
-
-The repository contains a threat model, control matrix, security test plan, runbook, risk register, privacy notice, legal/framework notes and demo script so the implementation can be discussed with a CISO in terms of evidence, residual risk and future controls.
-
-## Residual production work
-
-Before calling the service production-grade for unrestricted internet use, add:
-
-- TURN with short-lived credentials
-- centralized monitoring/alerting
-- SBOM/SCA and dependency provenance
-- external secret management
-- scalable shared session state
-- release-signing and Android App Links
-- penetration testing and independent assessment
-- documented incident response and retention policy
-- formal legal review for the exact deployment and user population
-
-## Verification
-
-Run `pytest -q` after installing the development dependencies. The suite covers session creation, credential-authenticated WebSocket pairing, consent event forwarding and enforcement of guest/host signaling direction.
+This project is a portfolio/security engineering demonstration. It is not a FedRAMP authorization, FISMA authorization, NASA/ISRO certification, or independent security assessment.

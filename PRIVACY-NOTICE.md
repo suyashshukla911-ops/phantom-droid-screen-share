@@ -1,23 +1,23 @@
-# Device-owner notice
+# Device-owner / Sender Notice
 
 ## Purpose
 
-This demo processes a live screen stream solely to demonstrate consent-based remote viewing for the current session.
+This demo uses a live browser display stream to demonstrate consent-controlled remote viewing during the current temporary session.
 
 ## Data scope
 
-The live video is the device screen. Anything visible on that screen may therefore be disclosed to the viewer.
+Only the browser surface explicitly selected by the sender's screen-share chooser is transmitted. Anything visible on that selected surface may therefore be disclosed to the viewer.
 
 The application does not intentionally request camera, microphone, contacts, messages, credentials, files or location.
 
 ## Retention
 
-The application is designed not to write screen frames to its server. Sessions are ephemeral and expire automatically.
+The application is designed not to write screen frames to the signaling server. Session state is held in memory and expires automatically.
 
 ## Withdrawal
 
-The device owner can deny the operating-system screen capture request, stop sharing, leave the session or close/refresh the web page.
+The sender can cancel the browser permission prompt, press **Stop sharing**, leave the session or refresh/close the page.
 
 ## Important legal note
 
-This notice is a product-design artifact, not legal advice or proof of statutory compliance. The operator should publish a final legal notice/privacy policy that reflects the actual production infrastructure, subprocessors, retention and jurisdictional scope.
+This is a product-design artifact, not legal advice or proof of statutory compliance. The final public privacy policy should reflect the actual operator, hosting provider, retention configuration, jurisdictions and subprocessors.

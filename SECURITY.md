@@ -4,52 +4,61 @@
 
 1. Viewer browser
 2. FastAPI signaling service
-3. Android sender
+3. Sender browser
 4. WebRTC media path
 
-The signaling server routes SDP/ICE metadata and session state. It does not receive or persist screen frames.
+The signaling service handles session state and signaling metadata. It does not receive or persist the screen media stream at the application layer.
 
 ## Authentication
 
-- Host credential: 256-bit-equivalent random URL-safe secret generated server-side.
-- Guest credential: separate high-entropy token embedded in the temporary QR/link.
-- Credentials are hashed before being held in the server process.
-- One host and one guest per session.
-- Reconnect with the same valid credential replaces the old socket.
+- High-entropy host and guest secrets are generated server-side.
+- Credentials are hashed before being held in memory.
+- The guest credential is embedded in the URL fragment, not the query string.
+- One host and one sender are allowed per session.
+- Valid reconnects replace stale sockets using a generation token.
 - Sessions expire automatically.
 
 ## Authorization
 
-- Host may create/end a session and receive the media.
-- Guest may offer video and change their own consent/share state.
-- Host cannot request hidden capture.
-- Signaling direction is enforced by role.
-- No remote control channel exists.
+- Pairing does not authorize capture.
+- Consent is a staged protocol, not a single blanket dialog.
+- The backend rejects screen-share offers until the consent and share-state prerequisites are satisfied.
+- The viewer is receive-only.
+- No remote control plane exists.
+
+## Browser capture boundary
+
+The web client uses `getDisplayMedia()` only from the explicit sender button. The browser remains responsible for the final capture-source chooser and permission prompt. The application cannot silently create a screen track.
 
 ## Privacy
 
-The application intentionally excludes application-level recording, screen-frame storage, camera, microphone, file transfer, shell access, keylogging and persistence. Infrastructure providers may have their own operational/network logs; those are outside the application's in-memory storage model.
+The application intentionally excludes application-level recording, screen-frame storage, camera, microphone, contacts, location, file transfer, shell access, keylogging and persistence.
 
-## Web security controls
+## Web security
 
 - HTTPS/WSS in deployment
-- CSP
+- CSP with no inline runtime scripts
 - `frame-ancestors 'none'`
 - `nosniff`
 - `no-referrer`
 - Permissions Policy
-- click-driven Web APIs only
-- no inline scripts
 - no third-party runtime JavaScript
+- `Cache-Control: no-store`
 - no credentials in source control
 
 ## Threats addressed
 
-- QR/session guessing: high-entropy tokens + TTL
-- stale "room occupied": idempotent credential-based reconnect
+- QR/session guessing: high-entropy token + TTL
+- stale guest slot: generation-aware reconnect
 - cross-site WebSocket abuse: origin validation
-- oversized signaling: request/message limits
-- unauthorized media direction: role-based signaling
-- consent confusion: staged UI + OS permission
-- same-device QR misuse: explicit second-device requirement
-- accidental persistence: no database and no media recording
+- oversized signaling: message-size and rate limits
+- unauthorized media direction: role + share-state enforcement
+- consent confusion: staged consent with explicit purpose/scope/handling/withdrawal
+- accidental persistence: no database and no screen-frame recording
+
+## Residual risks
+
+- STUN-only WebRTC can fail on restrictive NATs; TURN is the next production network control.
+- The sender may voluntarily reveal sensitive information by selecting or exposing it in the captured surface.
+- Render/infrastructure providers have their own operational logs outside this application's in-memory model.
+- The current in-memory session model is intentionally single-instance and is not a multi-region high-availability design.

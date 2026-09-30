@@ -3,10 +3,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .env
-node_modules/
 .idea/
 *.iml
 .DS_Store
 local.properties
-build/
-captures/
+coverage/
+htmlcov/
+.vscode/

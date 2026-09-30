@@ -6,3 +6,16 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
     autoDeployTrigger: commit
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PUBLIC_ORIGIN
+        value: https://phantom-droid-screen-share.onrender.com
+      - key: ALLOWED_ORIGINS
+        value: https://phantom-droid-screen-share.onrender.com
+      - key: SESSION_TTL_SECONDS
+        value: "900"
+      - key: CREATE_RATE_LIMIT
+        value: "6"
+      - key: MAX_ACTIVE_SESSIONS
+        value: "250"

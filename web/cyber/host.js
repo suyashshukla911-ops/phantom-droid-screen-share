@@ -3,6 +3,8 @@ const qrImage = document.querySelector('#qrImage');
 const sessionCode = document.querySelector('#sessionCode');
 const expiryText = document.querySelector('#expiryText');
 const copyButton = document.querySelector('#copyButton');
+const senderButton = document.querySelector('#senderButton');
+const surfaceButton = document.querySelector('#surfaceButton');
 const endButton = document.querySelector('#endButton');
 const consentStatus = document.querySelector('#consentStatus');
 const auditTrail = document.querySelector('#auditTrail');
@@ -22,14 +24,14 @@ const rtcConfig = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
+function escapeHtml(v) {
+  return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
 function setStatus(text, kind='idle') {
   statusEl.innerHTML = `<span class="dot ${kind}"></span><span>${escapeHtml(text)}</span>`;
 }
 function setPeer(text, kind='') {
   peerBadge.innerHTML = `<span class="dot ${kind}"></span><span>${escapeHtml(text)}</span>`;
-}
-function escapeHtml(v) {
-  return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 }
 function logEvent(event, role='system', metadata='') {
   const row = document.createElement('div');
@@ -42,8 +44,8 @@ function send(payload) {
   if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(payload));
 }
 async function createSession() {
-  const res = await fetch('/api/sessions', {method:'POST', headers:{'Content-Type':'application/json'}});
-  if (!res.ok) throw new Error('Session creation failed.');
+  const res = await fetch('/api/sessions', {method:'POST', headers:{'Content-Type':'application/json'}, cache:'no-store'});
+  if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error || 'Session creation failed.');
   return res.json();
 }
 function wsUrl() {
@@ -51,10 +53,7 @@ function wsUrl() {
 }
 async function renderQr(joinUrl) {
   const res = await fetch('/api/qr', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    cache: 'no-store',
-    body: JSON.stringify({data: joinUrl})
+    method:'POST', headers:{'Content-Type':'application/json'}, cache:'no-store', body:JSON.stringify({data:joinUrl})
   });
   if (!res.ok) throw new Error('QR generation failed.');
   const blob = await res.blob();
@@ -69,22 +68,23 @@ async function setupPeer() {
   remoteStream = new MediaStream();
   remoteVideo.srcObject = remoteStream;
   pc.addTransceiver('video', {direction:'recvonly'});
-  pc.ontrack = (event) => {
+  pc.ontrack = event => {
     const tracks = event.streams?.[0]?.getTracks?.() || [event.track];
-    for (const track of tracks) if (!remoteStream.getTracks().some(t => t.id === track.id)) remoteStream.addTrack(track);
+    for (const track of tracks) if (!remoteStream.getTracks().some(t=>t.id===track.id)) remoteStream.addTrack(track);
     emptyState.hidden = true;
     remoteVideo.play().catch(()=>{});
-    setStatus('Live screen stream', 'live');
-    setPeer('STREAMING', 'live');
-    viewerHint.textContent = 'Receiving the authorized device screen over WebRTC.';
-    logEvent('screen-stream-live','guest');
+    setStatus('Live browser mirror','live');
+    setPeer('STREAMING','live');
+    viewerHint.textContent = 'Receiving the authorized browser surface over WebRTC.';
+    logEvent('screen-stream-live','sender');
   };
-  pc.onicecandidate = e => { if (e.candidate) send({type:'candidate', candidate:e.candidate}); };
+  pc.onicecandidate = e => { if (e.candidate) send({type:'candidate',candidate:e.candidate}); };
   pc.onconnectionstatechange = () => {
     const state = pc?.connectionState;
-    if (state === 'connected') { setStatus('Peer connected','live'); setPeer('CONNECTED','live'); }
-    if (state === 'disconnected') { setStatus('Peer disconnected','warn'); setPeer('DISCONNECTED','warn'); }
-    if (state === 'failed' || state === 'closed') { setStatus('Connection ended','bad'); setPeer('OFFLINE','bad'); }
+    if (state === 'connected') { setStatus('WebRTC peer connected','live'); setPeer('CONNECTED','live'); }
+    if (state === 'disconnected') { setStatus('Peer temporarily disconnected','warn'); setPeer('DISCONNECTED','warn'); }
+    if (state === 'failed') { setStatus('WebRTC connection failed — TURN may be required on some networks','bad'); setPeer('FAILED','bad'); }
+    if (state === 'closed') { setStatus('Peer connection closed','warn'); setPeer('OFFLINE','warn'); }
   };
 }
 async function flushCandidates() {
@@ -105,41 +105,39 @@ function closePeer() {
 }
 function connect() {
   socket = new WebSocket(wsUrl());
-  socket.onopen = () => send({type:'join', role:'host', session:session.session, credential:session.host_secret});
-  socket.onmessage = async (event) => {
-    let msg;
-    try { msg = JSON.parse(event.data); } catch { return; }
-
+  socket.onopen = () => send({type:'join',role:'host',session:session.session,credential:session.host_secret});
+  socket.onmessage = async event => {
+    let msg; try { msg = JSON.parse(event.data); } catch { return; }
     if (msg.type === 'authenticated') {
-      setStatus('Viewer waiting for a device','warn');
-      logEvent('host-authenticated','host');
+      setStatus('Viewer waiting for sender','warn');
+      logEvent('viewer-authenticated','host');
       return;
     }
     if (msg.type === 'peer-ready') {
-      setStatus('Device paired — awaiting consent','live');
+      setStatus('Sender paired — awaiting consent','live');
       setPeer('PAIRED','live');
-      viewerHint.textContent = 'The device paired. No screen is visible until the owner grants separate screen-share authorization.';
-      consentStatus.textContent = 'Device paired. Waiting for specific consent.';
-      logEvent('device-paired','system');
+      viewerHint.textContent = 'The sender is paired. Pairing does not authorize screen capture.';
+      consentStatus.textContent = 'Sender paired. Waiting for staged consent.';
+      logEvent('sender-paired','system');
       return;
     }
     if (msg.type === 'consent-status') {
       const labels = {
-        'notice-accepted':'Consent notice acknowledged.',
-        'consent-checklist-completed':'All specific consent checklist items completed.',
-        'share-permission-granted':'Operating-system screen-share permission granted.',
-        'share-permission-denied':'Operating-system screen-share permission denied.',
+        'purpose-confirmed':'Purpose confirmed.',
+        'scope-confirmed':'Screen-scope acknowledgement confirmed.',
+        'data-handling-confirmed':'Data-handling acknowledgement confirmed.',
+        'withdrawal-confirmed':'Withdrawal control acknowledged.',
+        'consent-complete':'Web consent sequence completed.',
+        'share-permission-granted':'Browser screen-share permission granted.',
+        'share-permission-denied':'Browser screen-share permission denied or cancelled.',
         'revoked':'Consent/share withdrawn.'
       };
       consentStatus.textContent = labels[msg.stage] || 'Consent state updated.';
       logEvent(`consent-${msg.stage}`,'guest');
-      if (msg.stage === 'share-permission-granted') {
-        viewerHint.textContent = 'Permission granted. Waiting for the WebRTC video track.';
-      }
+      if (msg.stage === 'share-permission-granted') viewerHint.textContent = 'Capture permission granted. Waiting for the WebRTC video track.';
+      if (msg.stage === 'share-permission-denied') viewerHint.textContent = 'Browser capture was denied. The sender can try again.';
       if (msg.stage === 'revoked') {
-        closePeer();
-        setPeer('PAIRED','live');
-        setStatus('Share stopped — awaiting new authorization','warn');
+        closePeer(); setPeer('PAIRED','live'); setStatus('Share stopped — awaiting new authorization','warn');
       }
       return;
     }
@@ -149,8 +147,8 @@ function connect() {
       await flushCandidates();
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      send({type:'answer', sdp:pc.localDescription});
-      logEvent('offer-accepted','guest');
+      send({type:'answer',sdp:pc.localDescription});
+      logEvent('offer-accepted','sender');
       return;
     }
     if (msg.type === 'candidate') {
@@ -161,73 +159,57 @@ function connect() {
     if (msg.type === 'share-status') {
       if (msg.active) {
         setStatus('Authorized stream in progress','live');
-        viewerHint.textContent = 'Device has started its authorized screen stream.';
-        logEvent('share-active','guest');
+        viewerHint.textContent = 'Sender has started its authorized screen stream.';
+        logEvent('share-active','sender');
       } else {
-        closePeer();
-        setPeer('PAIRED','live');
-        setStatus('Share stopped — awaiting new authorization','warn');
-        viewerHint.textContent = 'The device is still paired, but no screen is currently shared.';
-        logEvent('share-inactive','guest');
+        closePeer(); setPeer('PAIRED','live'); setStatus('Share stopped — awaiting new authorization','warn');
+        viewerHint.textContent = 'The sender remains paired, but no screen is currently shared.';
+        logEvent('share-inactive','sender');
       }
       return;
     }
     if (msg.type === 'stop-share') {
-      closePeer();
-      setPeer('PAIRED','live');
-      setStatus('Share stopped','warn');
+      closePeer(); setPeer('PAIRED','live'); setStatus('Share stopped','warn');
       return;
     }
     if (msg.type === 'peer-left') {
-      closePeer();
-      setPeer('NO DEVICE','');
-      setStatus('Device left the session','warn');
-      consentStatus.textContent = 'Waiting for the device owner.';
-      viewerHint.textContent = 'Waiting for another device to join.';
-      logEvent('device-left','guest');
+      closePeer(); setPeer('NO SENDER',''); setStatus('Sender left the session','warn');
+      viewerHint.textContent = 'Waiting for another browser session to join.';
+      logEvent('sender-left','guest');
       return;
     }
     if (msg.type === 'session-expired' || msg.type === 'session-ended') {
-      closePeer();
-      setStatus('Session ended','bad');
-      setPeer('OFFLINE','bad');
-      logEvent('session-ended','system');
-      setTimeout(()=>location.href='/cyber/host.html',1200);
+      closePeer(); setStatus('Session ended','bad'); setPeer('OFFLINE','bad'); logEvent('session-ended','system');
+      setTimeout(()=>location.href='/cyber/host.html',900);
       return;
     }
     if (msg.type === 'error') {
-      setStatus(msg.message || 'Session error','bad');
-      logEvent('error','server',msg.message || '');
+      setStatus(msg.message || 'Session error','bad'); logEvent('error','server',msg.message || '');
     }
   };
-  socket.onclose = () => {
-    if (!shuttingDown) setStatus('Signaling connection closed','bad');
-  };
+  socket.onclose = () => { if (!shuttingDown) setStatus('Signaling connection closed','bad'); };
 }
 function updateExpiry() {
   if (!session) return;
-  const left = Math.max(0, session.expires_at * 1000 - Date.now());
+  const left = Math.max(0, session.expires_at*1000 - Date.now());
   const seconds = Math.floor(left/1000);
   expiryText.textContent = `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
-  if (left === 0) return;
-  setTimeout(updateExpiry,1000);
+  if (left > 0) setTimeout(updateExpiry,1000);
 }
 copyButton.onclick = async () => {
   try { await navigator.clipboard.writeText(session.join_url); copyButton.textContent='Copied'; setTimeout(()=>copyButton.textContent='Copy join link',1200); }
   catch { window.prompt('Copy the join link:', session.join_url); }
 };
+senderButton.onclick = () => {
+  if (!session?.join_url) return;
+  window.open(session.join_url, '_blank', 'noopener,noreferrer');
+};
+surfaceButton.onclick = () => window.open('/cyber/surface.html', '_blank', 'noopener,noreferrer');
 endButton.onclick = () => {
   if (!confirm('End this temporary screen-sharing session now?')) return;
-  shuttingDown = true;
-  send({type:'end-session'});
-  try { socket?.close(); } catch {}
-  closePeer();
-  location.href='/cyber/host.html';
+  shuttingDown = true; send({type:'end-session'}); try { socket?.close(); } catch {} closePeer(); location.href='/cyber/host.html';
 };
-window.addEventListener('beforeunload',()=> {
-  if (!shuttingDown) { try { send({type:'leave'}); } catch {} }
-  closePeer();
-});
+window.addEventListener('beforeunload',()=>{ if(!shuttingDown) { try { send({type:'leave'}); } catch {} } closePeer(); });
 
 (async function init(){
   try {

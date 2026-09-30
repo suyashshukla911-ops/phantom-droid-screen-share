@@ -1,9 +1,11 @@
 # Version
 
-2.1.1-industry-demo
+3.0.0-browser-mirror
 
-Scope: standalone consent-first Android screen-sharing portfolio project.
+Scope: standalone consent-first browser screen-mirroring portfolio project.
 Backend: Python/FastAPI.
-Native sender: Java/Android.
+Sender: browser Screen Capture API + WebRTC.
+Viewer: browser WebRTC receive-only console.
+Native Android sender: intentionally removed from this portfolio-demo stage.
 Portfolio integration: intentionally not included.
 Date: 2026-09-30.

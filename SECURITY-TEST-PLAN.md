@@ -2,42 +2,40 @@
 
 ## Authentication
 - Invalid host credential is rejected.
-- Invalid guest token is rejected.
-- Guest cannot send host-only messages.
-- Host cannot send guest-offer messages.
-- Expired sessions cannot authenticate.
+- Invalid sender token is rejected.
+- Expired sessions are rejected.
+- Stale sender reconnect can replace its prior socket.
 
-## Authorization
-- No screen stream exists before OS authorization.
-- Guest can stop its own stream.
-- Host cannot trigger capture.
-- No input/control channel exists.
+## Consent / Authorization
+- Consent stages must be completed in order.
+- Screen-share offer is rejected before share activation.
+- Viewer cannot create a media offer.
+- Sender cannot create the viewer answer.
+- Browser capture is requested only from an explicit click handler.
 
 ## Session lifecycle
-- Host refresh creates a fresh session.
-- Guest refresh releases/reclaims its slot using the same token.
-- Host end-session closes the guest.
-- Session expires automatically.
-- Stale socket cannot displace a newer authenticated connection.
+- Host creates a fresh session on refresh.
+- Sender leave releases the slot.
+- Host end-session closes the sender.
+- Session expiration tears down both peers.
+- Stop-sharing clears active media state.
 
 ## Web security
-- CSP blocks inline scripts and third-party runtime JS.
-- Clickjacking protection verified.
+- CSP blocks inline runtime scripts and third-party execution.
+- Clickjacking protection is present.
 - Referrer is suppressed.
-- Camera and microphone are denied by Permissions Policy.
+- Camera/microphone are denied by Permissions Policy.
 - Oversized signaling frames are rejected.
-- WebSocket rate limits are enforced.
+- WebSocket message rate limits are enforced.
 
-## Android
-- Denying MediaProjection produces no media.
-- Stopping from OS notification stops capture.
-- Closing the app stops capture.
-- Revoking projection permission stops the stream.
-- Screen capture foreground-service notification remains visible.
+## Browser capture
+- Supported desktop browser shows its native screen-share chooser.
+- Cancelling the chooser creates no active media stream.
+- Stopping the browser's capture track revokes the session share.
+- Unsupported browsers receive a clear platform-capability message.
 
 ## Privacy
 - No database writes.
-- No SDP/ICE persistence.
 - No screen-frame persistence.
 - No application-level recording.
 - No camera/microphone permissions.

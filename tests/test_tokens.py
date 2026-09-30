@@ -3,7 +3,10 @@ import hmac
 import secrets
 import unittest
 
-def digest(value): return hashlib.sha256(value.encode()).hexdigest()
+
+def digest(value):
+    return hashlib.sha256(value.encode()).hexdigest()
+
 
 class TokenTests(unittest.TestCase):
     def test_random_values_are_distinct(self):
@@ -20,6 +23,7 @@ class TokenTests(unittest.TestCase):
         a = digest("secret")
         b = digest("secret")
         self.assertTrue(hmac.compare_digest(a, b))
+
 
 if __name__ == "__main__":
     unittest.main()

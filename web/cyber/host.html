@@ -4,15 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>Phantom-Droid — Viewer Console</title>
+  <title>Phantom-Droid — Remote Screen Mirror</title>
   <link rel="stylesheet" href="/cyber/style.css">
 </head>
 <body>
 <main class="shell">
   <header class="topbar">
     <div>
-      <p class="eyebrow">PHANTOM-DROID / VIEWER</p>
-      <h1 class="page-title">Remote Screen Console</h1>
+      <p class="eyebrow">PHANTOM-DROID / SECURITY LAB</p>
+      <h1 class="page-title">Remote Screen Mirror</h1>
+      <p class="lead compact">Consent-controlled, receive-only browser screen sharing. No app download is required for this demo.</p>
     </div>
     <div id="status" class="status"><span class="dot"></span><span>Creating secure session…</span></div>
   </header>
@@ -20,8 +21,8 @@
   <section class="grid">
     <section class="card panel">
       <div class="section-number">01</div>
-      <h2>Pair the device</h2>
-      <p class="muted">The QR contains only an opaque, short-lived session credential. It does not contain personal data.</p>
+      <h2>Pair a browser</h2>
+      <p class="muted">The QR contains only an opaque, short-lived session credential. The credential is kept in the URL fragment so it is not sent to the server in ordinary HTTP requests.</p>
 
       <div class="qr-wrap"><img id="qrImage" alt="Temporary screen-sharing pairing QR code"></div>
 
@@ -31,18 +32,25 @@
       </div>
 
       <div class="expiry">
-        <span>Maximum session lifetime</span>
+        <span>Session lifetime</span>
         <strong id="expiryText">15:00</strong>
       </div>
 
       <div class="toolbar">
         <button id="copyButton" class="button secondary" type="button">Copy join link</button>
+        <button id="senderButton" class="button secondary" type="button">Open sender here</button>
+        <button id="surfaceButton" class="button secondary" type="button">Open demo surface</button>
         <button id="endButton" class="button danger" type="button">End session</button>
       </div>
 
       <div class="notice">
-        <strong>Consent status</strong>
-        <div id="consentStatus" class="status-line">Waiting for the device owner.</div>
+        <strong>How to demo this quickly</strong>
+        <div class="status-line">For a no-install demo, use a second browser session on a desktop. Open the sender link, complete consent, then share a separate tab/window. The viewer receives that browser surface over WebRTC.</div>
+      </div>
+
+      <div class="notice notice-warn">
+        <strong>Platform boundary</strong>
+        <div class="status-line">A normal Android browser does not expose whole-device screen capture through this web interface. No hidden workaround is attempted; use a supported desktop browser for the live mirror demonstration.</div>
       </div>
 
       <div class="audit">
@@ -58,24 +66,28 @@
       <div class="viewer-head">
         <div>
           <div class="section-number">02</div>
-          <h2>Remote Android Screen</h2>
-          <p id="viewerHint" class="muted">Waiting for the paired device.</p>
+          <h2>Live browser mirror</h2>
+          <p id="viewerHint" class="muted">Waiting for the paired sender.</p>
         </div>
-        <div id="peerBadge" class="status"><span class="dot"></span><span>NO DEVICE</span></div>
+        <div id="peerBadge" class="status"><span class="dot"></span><span>NO SENDER</span></div>
       </div>
 
       <div class="video-frame">
         <video id="remoteVideo" autoplay playsinline></video>
         <div id="emptyState" class="empty-state">
           <strong>Remote view is offline</strong>
-          <span>Pairing alone does not grant screen access. The device owner must complete the separate consent and OS authorization steps.</span>
+          <span>The viewer is receive-only. The sender must complete each consent step and then use the browser's own screen-sharing permission prompt.</span>
         </div>
       </div>
 
       <div class="viewer-security">
-        <div><strong>Receive-only viewer</strong><span>No mouse, keyboard, touch, shell, file transfer, camera or microphone control.</span></div>
-        <div><strong>No application recording</strong><span>Screen frames are not written to the signaling server by this project.</span></div>
-        <div><strong>Ephemeral session</strong><span>Refresh, leave, stop-sharing or expiry tears down the session.</span></div>
+        <div><strong>Receive-only</strong><span>No mouse, keyboard, touch, shell, file transfer, camera or microphone control.</span></div>
+        <div><strong>No application recording</strong><span>This service does not write the screen stream to the signaling server.</span></div>
+        <div><strong>Ephemeral session</strong><span>Leave, refresh, stop-share or expiry tears down the session.</span></div>
+      </div>
+
+      <div class="architecture-strip">
+        <span>CONSENT</span><b>→</b><span>CAPTURE</span><b>→</b><span>WEBRTC</span><b>→</b><span>RECEIVE</span>
       </div>
     </section>
   </section>

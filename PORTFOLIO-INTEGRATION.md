@@ -1,17 +1,11 @@
 # Portfolio Integration — later stage only
 
-Do not modify the portfolio yet.
+Do not modify the portfolio in this repository.
 
-The eventual integration target is the existing SECURITY node in the portfolio's interactive system stack. The rest of the portfolio remains independent.
+The existing portfolio SECURITY node can later open the Phantom-Droid viewer console in a modal or new route.
 
-Recommended deployment pattern:
-- Portfolio: existing site/hosting.
-- Phantom-Droid: separate HTTPS service.
-- SECURITY node opens the Phantom-Droid host console in a modal or new route.
-- The QR continues to point to the Phantom-Droid service.
-- No secrets are embedded into the portfolio.
+Recommended pattern:
 
-Integration should be a small adapter:
-`SECURITY click -> open cybersecurity lab -> host console`
+`SECURITY click -> open Phantom-Droid viewer -> QR remains on the separate HTTPS service`
 
-Do not move the Python signaling server into the static portfolio repository.
+No signaling secret should be embedded into the portfolio code.

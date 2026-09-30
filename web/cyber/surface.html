@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phantom-Droid — Demo Surface</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#eaf5f5;background:#050b10;--a:#34e7d0;--m:#91aab3;--l:#21414a}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;display:grid;place-items:center;padding:28px;background:radial-gradient(circle at 50% 20%,#0d242c,transparent 45%),#050b10}
+    main{width:min(1000px,100%);padding:40px;border:1px solid var(--l);border-radius:26px;background:rgba(8,22,29,.95);box-shadow:0 30px 100px rgba(0,0,0,.45)}
+    .eyebrow{color:var(--a);font:800 12px ui-monospace,monospace;letter-spacing:.16em}.title{font-size:clamp(38px,7vw,82px);line-height:.95;margin:16px 0}.muted{color:var(--m);line-height:1.6;max-width:65ch}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}.tile{padding:20px;border:1px solid var(--l);border-radius:18px;background:#08161c}.tile strong{display:block;color:#fff}.value{font:800 28px ui-monospace,monospace;color:var(--a);margin-top:9px}.bar{height:9px;margin-top:12px;border-radius:999px;background:#0f2a31;overflow:hidden}.fill{height:100%;width:0;background:var(--a);transition:width .35s ease}.footer{display:flex;justify-content:space-between;gap:16px;margin-top:25px;color:#76919a;font:600 11px ui-monospace,monospace;flex-wrap:wrap}@media(max-width:700px){main{padding:24px}.grid{grid-template-columns:1fr}.title{font-size:52px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">PHANTOM-DROID / LIVE DEMO SURFACE</div>
+  <div class="title">Browser mirror test</div>
+  <p class="muted">Use this page as the capture surface during the portfolio demonstration. When the sender shares this tab, the viewer should reproduce the live changes below.</p>
+  <section class="grid">
+    <div class="tile"><strong>Session clock</strong><div id="clock" class="value">00:00</div></div>
+    <div class="tile"><strong>Event counter</strong><div id="counter" class="value">0000</div><div class="bar"><div id="bar" class="fill"></div></div></div>
+    <div class="tile"><strong>Security state</strong><div id="state" class="value">READY</div></div>
+  </section>
+  <div class="footer"><span>RECEIVE-ONLY / NO CONTROL PLANE</span><span id="stamp">—</span></div>
+</main>
+<script>
+  const start=Date.now(); let n=0;
+  setInterval(()=>{
+    const s=Math.floor((Date.now()-start)/1000);
+    document.querySelector('#clock').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    n=(n+7)%10000;
+    document.querySelector('#counter').textContent=String(n).padStart(4,'0');
+    document.querySelector('#bar').style.width=`${(n%100)}%`;
+    document.querySelector('#state').textContent=(s%4===0?'READY':s%4===1?'STREAMING':s%4===2?'WEBRTC':'CONSENT');
+    document.querySelector('#stamp').textContent=new Date().toLocaleTimeString();
+  },1000);
+</script>
+</body>
+</html>
