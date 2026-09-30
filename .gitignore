@@ -10,3 +10,7 @@ local.properties
 coverage/
 htmlcov/
 .vscode/
+.gradle/
+build/
+dist/
+*.log

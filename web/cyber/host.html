@@ -21,7 +21,7 @@
   <section class="grid">
     <section class="card panel">
       <div class="section-number">01</div>
-      <h2>Pair a browser</h2>
+      <h2>Viewer / receiver</h2>
       <p class="muted">The QR contains only an opaque, short-lived session credential. The credential is kept in the URL fragment so it is not sent to the server in ordinary HTTP requests.</p>
 
       <div class="qr-wrap"><img id="qrImage" alt="Temporary screen-sharing pairing QR code"></div>
@@ -38,14 +38,19 @@
 
       <div class="toolbar">
         <button id="copyButton" class="button secondary" type="button">Copy join link</button>
-        <button id="senderButton" class="button secondary" type="button">Open sender here</button>
+        <button id="senderButton" class="button secondary" type="button">Open sender here (same browser)</button>
         <button id="surfaceButton" class="button secondary" type="button">Open demo surface</button>
         <button id="endButton" class="button danger" type="button">End session</button>
       </div>
 
+      <div class="notice notice-flow">
+        <strong>Session handoff</strong>
+        <div class="status-line">1. Keep this viewer open. 2. Click <strong>Copy join link</strong>. 3. In Browser B open the project home page and paste the link into <strong>Join existing session</strong>. 4. Browser B must show the same session ID before sharing.</div>
+      </div>
+
       <div class="notice">
         <strong>How to demo this quickly</strong>
-        <div class="status-line">For a no-install demo, use a second browser session on a desktop. Open the sender link, complete consent, then share a separate tab/window. The viewer receives that browser surface over WebRTC.</div>
+        <div class="status-line">This browser is the receiver. Copy the join link, open the site root in a second browser, paste the link under <strong>Join existing session</strong>, complete consent, then share a tab/window/display. The second browser is the sender.</div>
       </div>
 
       <div class="notice notice-warn">

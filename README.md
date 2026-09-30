@@ -63,16 +63,16 @@ Open:
 
 ## Simple desktop demo
 
-1. Open the viewer page.
-2. Click **Open sender here**.
-3. In the new tab, complete all four consent stages.
-4. Wait for **Viewer connected**.
+1. Open the project home page in Browser A and click **Open viewer console**.
+2. Browser A creates the single viewer session and displays the QR/join link.
+3. In Browser B, open the project home page and paste Browser A's **Copy join link** into **Join existing session**. Do not create a second session.
+4. Complete all four consent stages in Browser B and wait for **Viewer connected**.
 5. Click **Start browser screen sharing**.
 6. In the browser's native chooser, select a demo tab/window/screen and approve it.
 7. The viewer receives the live surface.
 8. Click **Stop sharing** to revoke the stream.
 
-For the cleanest presentation, click **Open demo surface** on the viewer and share that tab. Its clock/counter/security state visibly changes, making the mirror easy to verify.
+For the cleanest presentation, click **Open demo surface** on Browser A and share that tab from Browser B. Its clock/counter/security state visibly changes, making the mirror easy to verify.
 
 ## Render
 

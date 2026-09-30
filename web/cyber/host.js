@@ -18,8 +18,6 @@ let pc = null;
 let remoteStream = null;
 let session = null;
 let shuttingDown = false;
-const pendingCandidates = [];
-
 const rtcConfig = {
   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
@@ -78,7 +76,7 @@ async function setupPeer() {
     viewerHint.textContent = 'Receiving the authorized browser surface over WebRTC.';
     logEvent('screen-stream-live','sender');
   };
-  pc.onicecandidate = e => { if (e.candidate) send({type:'candidate',candidate:e.candidate}); };
+  pc.onicecandidate = null;
   pc.onconnectionstatechange = () => {
     const state = pc?.connectionState;
     if (state === 'connected') { setStatus('WebRTC peer connected','live'); setPeer('CONNECTED','live'); }
@@ -87,17 +85,21 @@ async function setupPeer() {
     if (state === 'closed') { setStatus('Peer connection closed','warn'); setPeer('OFFLINE','warn'); }
   };
 }
-async function flushCandidates() {
-  if (!pc?.remoteDescription) return;
-  while (pendingCandidates.length) {
-    const c = pendingCandidates.shift();
-    try { await pc.addIceCandidate(c); } catch {}
-  }
+async function waitForIceGatheringComplete(peer) {
+  if (peer.iceGatheringState === 'complete') return;
+  await new Promise(resolve => {
+    const onState = () => {
+      if (peer.iceGatheringState === 'complete') {
+        peer.removeEventListener('icegatheringstatechange', onState);
+        resolve();
+      }
+    };
+    peer.addEventListener('icegatheringstatechange', onState);
+  });
 }
 function closePeer() {
   if (pc) try { pc.close(); } catch {}
   pc = null;
-  pendingCandidates.length = 0;
   if (remoteStream) remoteStream.getTracks().forEach(t=>t.stop());
   remoteStream = null;
   remoteVideo.srcObject = null;
@@ -144,16 +146,11 @@ function connect() {
     if (msg.type === 'offer') {
       await setupPeer();
       await pc.setRemoteDescription(msg.sdp);
-      await flushCandidates();
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      await waitForIceGatheringComplete(pc);
       send({type:'answer',sdp:pc.localDescription});
-      logEvent('offer-accepted','sender');
-      return;
-    }
-    if (msg.type === 'candidate') {
-      if (!pc?.remoteDescription) pendingCandidates.push(msg.candidate);
-      else try { await pc.addIceCandidate(msg.candidate); } catch {}
+      logEvent('offer-accepted','guest');
       return;
     }
     if (msg.type === 'share-status') {
@@ -170,6 +167,7 @@ function connect() {
     }
     if (msg.type === 'stop-share') {
       closePeer(); setPeer('PAIRED','live'); setStatus('Share stopped','warn');
+      viewerHint.textContent = 'The sender remains paired, but the live mirror is off.';
       return;
     }
     if (msg.type === 'peer-left') {

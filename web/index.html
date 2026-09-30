@@ -1,5 +1,77 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><title>Phantom-Droid — Security Screen Mirror</title><link rel="stylesheet" href="/cyber/style.css"></head>
-<body><main class="center-screen"><section class="card consent-card"><p class="eyebrow">PHANTOM-DROID / SECURITY LAB</p><h1 class="page-title">Consent-first browser screen mirror</h1><p class="lead">A temporary QR session pairs a sender browser with a receive-only viewer. No application download is required for the portfolio demonstration.</p><div class="toolbar"><a class="button primary" href="/cyber/host.html">Open viewer console</a><a class="button secondary" href="/cyber/surface.html" target="_blank" rel="noopener noreferrer">Open demo surface</a></div><div class="notice"><strong>Design boundary</strong><div class="status-line">The sender browser controls screen capture through its own permission chooser. The server does not silently capture or record the display.</div></div></section></main></body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Phantom-Droid — Secure Browser Screen Mirror</title>
+<link rel="stylesheet" href="/cyber/style.css">
+</head>
+<body>
+<main class="center-screen">
+  <section class="card consent-card launcher-card">
+    <p class="eyebrow">PHANTOM-DROID / SECURITY LAB</p>
+    <h1 class="page-title">Secure browser screen mirror</h1>
+    <p class="lead">Create one temporary viewer session, then connect a second browser as the sender. The sender explicitly chooses what to share; the viewer is receive-only.</p>
+
+    <div class="launcher-grid">
+      <div class="launcher-option">
+        <div class="section-number">01</div>
+        <h2>Create viewer session</h2>
+        <p class="muted">Use this browser as the receiver. It generates the QR code and temporary join link.</p>
+        <a class="button primary wide" href="/cyber/host.html">Open viewer console</a>
+      </div>
+
+      <div class="launcher-option">
+        <div class="section-number">02</div>
+        <h2>Join existing session</h2>
+        <p class="muted">On the second browser, paste the join link copied from the viewer browser. Do not create another session.</p>
+        <form id="joinForm" class="join-form">
+          <label for="joinLink">Secure join link</label>
+          <input id="joinLink" name="joinLink" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="Paste the copied join link here" required>
+          <button class="button secondary wide" type="submit">Join as sender</button>
+          <div id="joinError" class="form-error" role="alert" hidden></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <a class="button secondary" href="/cyber/surface.html" target="_blank" rel="noopener noreferrer">Open demo surface</a>
+    </div>
+
+    <div class="notice">
+      <strong>Two-browser rule</strong>
+      <div class="status-line">Browser A is the receiver. Browser B is the sender. Both must use the same temporary join link; opening the home page twice creates two unrelated sessions.</div>
+    </div>
+
+    <div class="notice notice-warn">
+      <strong>Platform boundary</strong>
+      <div class="status-line">The live mirror uses the browser's own Screen Capture API. Supported desktop browsers can share a selected tab, window or display. Mobile browsers may not expose whole-device capture.</div>
+    </div>
+  </section>
+</main>
+<script>
+  const form = document.getElementById('joinForm');
+  const input = document.getElementById('joinLink');
+  const error = document.getElementById('joinError');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    error.hidden = true;
+    try {
+      const url = new URL(input.value.trim(), location.origin);
+      const token = new URLSearchParams(url.hash.replace(/^#/, '')).get('token') || '';
+      const session = url.searchParams.get('session') || '';
+      const sameOrigin = url.origin === location.origin;
+      const correctPath = url.pathname === '/cyber/join.html';
+      const validSession = /^[A-Za-z0-9_-]{20,80}$/.test(session);
+      const validToken = /^[A-Za-z0-9_-]{32,120}$/.test(token);
+      if (!sameOrigin || !correctPath || !validSession || !validToken) throw new Error('Paste a current Phantom-Droid join link from the viewer session.');
+      location.href = `${url.pathname}?session=${encodeURIComponent(session)}#token=${encodeURIComponent(token)}`;
+    } catch (e) {
+      error.textContent = e.message || 'Invalid join link.';
+      error.hidden = false;
+    }
+  });
+</script>
+</body>
 </html>

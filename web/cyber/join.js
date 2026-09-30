@@ -23,7 +23,6 @@ let localStream = null;
 let session = null;
 let paired = false;
 let shuttingDown = false;
-const pendingCandidates = [];
 const outbox = [];
 
 const rtcConfig = { iceServers: [{urls:'stun:stun.l.google.com:19302'}] };
@@ -106,10 +105,6 @@ function connect(){
       if(!pc)return;
       await pc.setRemoteDescription(msg.sdp);await flushCandidates();status('WebRTC peer connection established. The authorized browser surface is being shared.',true);return;
     }
-    if(msg.type==='candidate'){
-      if(!pc?.remoteDescription)pendingCandidates.push(msg.candidate);else try{await pc.addIceCandidate(msg.candidate)}catch{}
-      return;
-    }
     if(msg.type==='stop-share'){stopSharing(false);status('The viewer closed the share.');return;}
     if(msg.type==='peer-left'){paired=false;stopSharing(false);pairStatus.innerHTML='<span class="dot warn"></span><strong>Viewer left. Capture is stopped.</strong>';return;}
     if(msg.type==='session-expired'||msg.type==='session-ended'){stopSharing(false);status('The temporary session has ended.');setTimeout(()=>location.href='/cyber/join.html',900);return;}
@@ -141,16 +136,24 @@ stepContinue.onclick=()=>{
 async function createPeer(){
   if(pc)pc.close();
   pc=new RTCPeerConnection(rtcConfig);
-  pc.onicecandidate=e=>{if(e.candidate)send({type:'candidate',candidate:e.candidate})};
+  pc.onicecandidate=null;
   pc.onconnectionstatechange=()=>{
     if(pc?.connectionState==='connected')status('WebRTC connected. Live screen is being shared.',true);
     if(pc?.connectionState==='failed')status('WebRTC connection failed. The networks may require TURN relay configuration.');
   };
   for(const track of localStream?.getTracks()||[])pc.addTrack(track,localStream);
 }
-async function flushCandidates(){
-  if(!pc?.remoteDescription)return;
-  while(pendingCandidates.length){const c=pendingCandidates.shift();try{await pc.addIceCandidate(c)}catch{}}
+async function waitForIceGatheringComplete(peer){
+  if(peer.iceGatheringState==='complete') return;
+  await new Promise(resolve=>{
+    const onState=()=>{
+      if(peer.iceGatheringState==='complete'){
+        peer.removeEventListener('icegatheringstatechange',onState);
+        resolve();
+      }
+    };
+    peer.addEventListener('icegatheringstatechange',onState);
+  });
 }
 async function startWebShare(){
   if(!paired)return status('Wait until the viewer is connected.');
@@ -166,10 +169,11 @@ async function startWebShare(){
     shareButton.disabled=true;
     sendConsent('share-permission-granted');
     await createPeer();
+    send({type:'share-status',active:true});
     const offer=await pc.createOffer();
     await pc.setLocalDescription(offer);
+    await waitForIceGatheringComplete(pc);
     send({type:'offer',sdp:pc.localDescription});
-    send({type:'share-status',active:true});
     status('Browser permission granted. Connecting the live mirror…',true);
     const track=localStream.getVideoTracks()[0];
     track?.addEventListener('ended',()=>stopSharing(true),{once:true});
@@ -185,7 +189,6 @@ function stopSharing(notify=true){
   preview.srcObject=null;
   if(pc)try{pc.close()}catch{}
   pc=null;
-  pendingCandidates.length=0;
   stopButton.disabled=true;
   shareButton.disabled=!paired||!isScreenShareSupported;
   status('Screen sharing is OFF.');
